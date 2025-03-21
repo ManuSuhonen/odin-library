@@ -1,9 +1,94 @@
 @import url('https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap');
 @import url('/toggle.css');
 
-
-#test {
-    display: grid;
-    /* grid-template-areas: "a a a"; */
+body {
+    min-width: 300px;
 }
 
+dialog {
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 0.5rem;
+}
+
+.resizable {
+    resize: both;
+    overflow: auto;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+}
+
+.box-style {
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 0.5rem;
+    margin: 1rem;
+    padding: 1rem;
+}
+
+.book-container {
+    background-color: rgb(0 0 0 / 60%);
+    display: grid;
+    grid-template-columns: 3fr 1fr;
+    grid-template-rows: repeat(3, auto);
+    gap: 0px 0px;
+    grid-auto-flow: row;
+    grid-template-areas:
+        "title actions"
+        "author actions"
+        "page-count actions";
+}
+
+.book-title {
+    grid-area: title;
+    display: flex;
+    flex-direction: column;
+
+    h5 {
+        margin-left: 1rem;
+    }
+}
+
+.book-author {
+    grid-area: author;
+    display: flex;
+    flex-direction: column;
+
+    h5 {
+        margin-left: 1rem;
+    }
+}
+
+.book-page-count {
+    grid-area: page-count;
+    display: flex;
+    flex-direction: column;
+
+    h5 {
+        margin-left: 1rem;
+    }
+}
+
+.actions {
+    grid-area: actions;
+
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-template-rows: repeat(3, auto);
+
+    .form-switch {
+        margin: auto;
+    }
+
+    button {
+        /* height: 100px; */
+        /* height: 5rem; */
+    }
+}
+
+
+dialog label {
+    /* width: 100%; */
+    display: block;
+}
