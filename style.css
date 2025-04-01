@@ -1,6 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap');
-@import url('/toggle.css');
-
 body {
     min-width: 300px;
 }
@@ -81,14 +78,8 @@ dialog {
         margin: auto;
     }
 
-    button {
-        /* height: 100px; */
-        /* height: 5rem; */
-    }
 }
 
-
 dialog label {
-    /* width: 100%; */
     display: block;
 }

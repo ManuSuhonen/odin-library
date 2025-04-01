@@ -1,47 +1,3 @@
-let DOM = {
-    books: document.querySelector('#books'),
-    dialog: document.querySelector('dialog'),
-    form: document.querySelector('form') ?? undefined,
-    btnOpenDialog: document.querySelector('button#open-dialog'),
-    btnCloseDialog: document.querySelector('button.close-dialog'),
-    btnCloseDialog: document.querySelector('button.close-dialog'),
-    editBtns: document.querySelectorAll('button.edit'),
-    removeBtns: document.querySelectorAll('button.remove'),
-    bookArray: undefined,
-};
-
-bookArray = [...books.children];
-
-bookArray.forEach(book => {
-    let editBtn = book.querySelector('button.edit');
-    let removeBtn = book.querySelector('button.remove');
-
-    let uuid = book.dataset.uuid;
-    editBtn.addEventListener('click', (event) => {
-        delete proxiedList['uuid'];
-        debugger
-    });
-
-    removeBtn.addEventListener('click', (event) => {
-        delete proxiedList['uuid'];
-        debugger
-    });
-});
-
-// [...books.children].forEach(x => {});
-
-// [...books.children][0].querySelector('button.edit')
-
-// [...books.children][0].querySelector('button.edit').addEventListener('click', (event) => {})
-
-handler.onDelete = function (uuid) {
-    [...books.children].forEach(element => {
-        if (element.dataset.uuid == uuid) {
-            element.remove();
-        }
-    });
-};
-
 /**
  * @constructor
  * @param {string} title - The title of the book.
@@ -61,110 +17,137 @@ function Book(title, author, pageCount) {
 
     /** @type {string} */
     this.uuid = crypto.randomUUID();
+
+    /** @type {boolean} */
+    this.isRead = false;
 }
 
-DOM.btnOpenDialog?.addEventListener("click", event => {
-    DOM.dialog?.showModal();
-});
+/** @type {Book[]} */
+let bookArray = [];
 
-DOM.btnCloseDialog?.addEventListener('click', event => {
-    DOM.dialog?.close();
-});
+let DOM = {
+    dialog: {
+        dialog: document.querySelector('dialog'),
+        btnCloseDialog: document.querySelector('button.close-dialog'),
+    },
+    books: document.querySelector('#books'),
+    form: document.querySelector('form'),
+    formButton: function (isEdit) {
+        let content = document.querySelector('#template-buttons').content;
+        let selector = isEdit ? '#form-edit-btn' : '#form-submit-btn';
+        let btn = content.querySelector(selector).cloneNode(true);
+        DOM.form['form-edit-btn']?.remove();
+        DOM.form['form-submit-btn']?.remove();
+        DOM.form.appendChild(btn);
+    },
+    btnOpenDialog: document.querySelector('button#open-dialog'),
+    editBtns: document.querySelectorAll('button.edit'),
+    removeBtns: document.querySelectorAll('button.remove'),
+    getBookTemplate: function () {
+        let elem = document.querySelector('#bookTemplate');
+        let clone = elem.content.cloneNode(true);
+        return clone.firstElementChild;
+    },
+};
 
-DOM.dialog?.addEventListener('close', event => {
-    DOM.form?.reset();
-});
+DOM.btnOpenDialog.onclick = function (event) {
+    DOM.dialog.dialog.showModal();
+    DOM.formButton();
+};
 
-DOM.dialog?.addEventListener('submit', event => {
+DOM.dialog.btnCloseDialog.onclick = function (event) {
+    DOM.dialog.dialog.close();
+};
+
+DOM.dialog.dialog.onclose = function (event) {
+    DOM.form.reset();
+};
+
+function setBookDOM(bookNode, obj) {
+    bookNode.querySelector('.title').textContent = obj.title;
+    bookNode.querySelector('.author').textContent = obj.author;
+    bookNode.querySelector('.pages').textContent = obj.pages;
+}
+
+function formSubmitBookEdit(event) {
     let formData = new FormData(event.target);
     let obj = Object.fromEntries(formData);
+    let parent = event.submitter.parentBookNode;
+    setBookDOM(parent, obj);
 
+    bookArray.forEach((book) => {
+        if (book.uuid == obj.uuid) {
+            book.title = obj.title;
+            book.author = obj.author;
+            book.pageCount = obj.pages;
+        }
+    });
+}
+
+function formSubmitBookAdd(event) {
+    let formData = new FormData(event.target);
+    let obj = Object.fromEntries(formData);
     let book = new Book(obj.title, obj.author, obj.pages);
 
-    proxiedList[book.uuid] = book;
+    let clone = DOM.getBookTemplate();
 
-    let domBook = getBookHTML(book);
+    clone.querySelector('.title').textContent = book.title;
+    clone.querySelector('.author').textContent = book.author;
+    clone.querySelector('.pages').textContent = book.pageCount;
 
-    books.appendChild(domBook);
+    clone.dataset.uuid = book.uuid;
 
-    let removeBtn = domBook.querySelector('button.remove');
-    let editBtn = domBook.querySelector('button.edit');
+    // Remove book DOM.
+    clone.querySelector('.book-remove-btn').onclick = function (event) {
+        clone.remove();
+        bookArray = bookArray.filter(book => {
+            return book.uuid != clone.dataset.uuid;
+        });
+    };
 
-    removeBtn.addEventListener('click', (event) => {
-        delete proxiedList[book.uuid];
-    });
+    clone.querySelector('.book-edit-btn').parentBookNode = clone;
 
+    // Set form values from book DOM when editing.
+    clone.querySelector('.book-edit-btn').onclick = function (event) {
+        let parent = event.currentTarget.parentBookNode;
 
-    DOM.form?.reset();
-});
+        DOM.formButton(true);
 
-function makeBook() {
-    let obj = {};
-    let val = DOM.form ? DOM.form : undefined;
+        DOM.form['form-edit-btn'].parentBookNode = parent;
 
-    let formData = new FormData(val);
+        let nodeTitle = parent.querySelector('.title');
+        let nodeAuthor = parent.querySelector('.author');
+        let nodepage = parent.querySelector('.pages');
+        let nodeUUID = parent.dataset.uuid;
 
-    formData.forEach((value, key) => {
-        obj[key] = value;
-    });
+        DOM.form.elements.title.value = nodeTitle.textContent;
+        DOM.form.elements.author.value = nodeAuthor.textContent;
+        DOM.form.elements.pages.value = nodepage.textContent;
+        DOM.form.elements.uuid.value = nodeUUID;
 
-    let book = new Book(tttt.title, tttt.author, tttt.pageCount);
+        DOM.dialog.dialog.showModal();
+    };
 
-    proxiedList[book.uuid] = book;
+    clone.querySelector('.form-check-input').onclick = function (event) {
+        bookArray.forEach((book) => {
+            if (book.uuid == clone.dataset.uuid) {
+                book.isRead = event.target.checked;
+            }
+        });
+    };
 
-    let domBook = getBookHTML(book);
-    books.appendChild(domBook);
+    bookArray.push(book);
+    books.appendChild(clone);
+
+    DOM.form.reset();
 }
 
-/**
- * Returns the sum of a and b
- * @param {Book} book
- * @returns {HTMLDivElement}
- */
-function getBookHTML(book) {
-    let bookDiv = document.createElement("div");
+DOM.dialog.dialog.onsubmit = function (event) {
+    if (event.submitter.id == 'form-edit-btn') {
+        formSubmitBookEdit(event);
+    }
 
-    bookDiv.className = "book-container box-style";
-
-    bookDiv.innerHTML = `
-    <div class="book-title box-style">
-        <h6>Title:</h6>
-        <h5 data-title="Xeelee Sequence">${book.title}</h5>
-    </div>
-    <div class="book-author box-style">
-        <h6>Author:</h6>
-        <h5>${book.author}</h5>
-    </div>
-    <div class="book-page-count box-style">
-        <h6>Page Count:</h6>
-        <h5>${book.pageCount}</h5>
-    </div>
-    <div class="actions box-style">
-        <div class="form-check form-switch form-check-reverse">
-            <label class="form-check-label"> Has been read? <input class="form-check-input" type="checkbox">
-            </label>
-        </div>
-        <button type="button" class="btn edit btn-primary box-style">Edit</button>
-        <button type="button" class="btn remove btn-primary box-style">Remove</button>
-    </div>
-    `;
-
-    bookDiv.dataset.uuid = book.uuid;
-    
-    // bookDiv.querySelector('button.remove');
-
-    // let editBtn = bookDiv.querySelector('button.edit');
-    // let removeBtn = bookDiv.querySelector('button.remove');
-
-    // removeBtn.addEventListener('click', (event) => {
-    //     delete proxiedList[book.uuid];
-    //     debugger
-    // });
-
-    // editBtn.addEventListener('click', (event) => {
-    //     delete proxiedList[book.uuid];
-    //     debugger
-    // });
-
-    return bookDiv;
-}
+    if (event.submitter.id == 'form-submit-btn') {
+        formSubmitBookAdd(event);
+    }
+};
